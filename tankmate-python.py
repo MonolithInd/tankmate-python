@@ -13,24 +13,25 @@ import argparse
 import configparser
 from pprint import pprint
 
-# read config file that contains things like the API key and userID
-# required to make the calls
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-API_KEY = config['auth']['API_KEY']
-USER_ID = config['auth']['USER_ID']
-
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="Script to retrive the current tank utilisation percentage from a TankMate Sensor",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-j", "--json", action="store_true", help="output requested data as JSON and exit")
+parser.add_argument("-c", "--config",action="store", type=str,  help="Specify the config file that contains things like the API key and UserID", default="config.ini")
 parser.add_argument("-l", "--list", action="store_true", help="List tanks by deviceID and name")
 parser.add_argument("-id", "--deviceID",action="store", type=str,  help="Specify the deviceID for arguments that require it. If not specified the first deviceID associated with the account is used")
 parser.add_argument("-r", "--readings", action="store_true", help="Return readings from tank. If -d <days> and -id <deviceID> are not specificed, defailts to 1 day for first device found on account")
 parser.add_argument("-d", "--days",action="store", type=str,  help="Specify number of days to return tank data for", default="1")
 args = parser.parse_args()
-config = vars(args)
+args= vars(args)
+
+# read config file that contains things like the API key and userID
+# required to make the calls
+configfile = configparser.ConfigParser()
+configfile.read(args['config'])
+
+API_KEY = configfile['auth']['API_KEY']
+USER_ID = configfile['auth']['USER_ID']
 
 # URL for tank level data JSON blob
 url = "https://api.tankmate.app/status/?uid=" + USER_ID
@@ -46,7 +47,7 @@ def list_devices():
     # get data
     response = requests.get(url, headers=headers)
     json_data = response.json()
-    if config['json']:
+    if args['json']:
         print(json_data)
     else: 
         print ("-------------------------------")
@@ -66,17 +67,17 @@ def list_devices():
 # readings
 
 def get_readings():
-    print (config['deviceID'])
+#    print (args['deviceID'])
     # check if deviceID specified.
-    if (config['deviceID'] == "None"):
+    if not (args['deviceID']):
         print("No device ID!")
 
 
 
-if (config['list']):
+if (args['list']):
     list_devices()
 
-if (config['readings']):
+if (args['readings']):
     get_readings()
 
 
